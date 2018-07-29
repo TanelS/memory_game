@@ -1,10 +1,16 @@
 /*
  * Create a list that holds all of your cards
  */
+// Timer (start) ==========================================================
+// Although using setInterval() is not that complicated I wathed
+// https://discussions.udacity.com/t/memory-game-timer-help-please/784074
+// and thied that solution. What I do not like about that is the use
+// of the global variables. Timer functionality should be redisgned
 
 let timer;
 let minutes = '0';
 let seconds = '0';
+let gameStars = '0';
 
 function startTimer() {
     timer = setInterval(function () {
@@ -27,30 +33,44 @@ function formatTime() {
     return min + ':' + sec;
 }
 
+// Timer (end) ==========================================================
+
+// New game starting code. Unfortunately there is some code repetition from
+// other functions.
+
 function newGame() {
-    let packOfCards = [];
+    let packOfCards = []; // here are the cards added for reshuffling
     let cards = document.querySelectorAll(".card");
     let cardPack = document.querySelector(".deck");
     let stars = document.querySelectorAll(".fa-star-o");
     let counter = document.querySelector('.moves');
+    let timerDisplay = document.querySelector('.game-timer');
+    // new 'empty' values for the game
+    timerDisplay.innerText = '00:00';
     counter.innerText = 0;
+    minutes = '0';
+    seconds = '0';
     for (let card of cards) {
         card.className = 'card';
         packOfCards.push(card);
     }
 
+    // shuffling:
     shuffle(packOfCards);
 
+    // adding reshuffled cards bach to the DOM:
     for (card of packOfCards) {
         cardPack.appendChild(card);
     }
+    // changes stars to the maximum value, some might have retained state
+    // from previous game
     for (let star of stars) {
         star.className = 'fa fa-star';
     }
-    startTimer(); //TODO:  ei funka korralikult
 
-    console.log('Strars on:', stars); //TODO: kustuta!
 }
+
+// Main function for running the game:
 
 function theGame() {
     let openCards = [];
@@ -59,12 +79,8 @@ function theGame() {
     let clickedCard;
     let cards = document.querySelectorAll(".card");
     let restartButton = document.querySelector('.fa-repeat');
-    let timerDisplay = document.querySelector('.game-timer');
-    timerDisplay.innerText = setInterval(function () {
-        formatTime()
-    },1000);
 
-
+    // Eventlistener for clicks on the cards
     restartButton.addEventListener('click', function () {
         openCards = [];
         moveCount = 0;
@@ -74,39 +90,41 @@ function theGame() {
     for (card of cards) {
         card.addEventListener("click", function (card) {
             openCard(card);
+            startTimer();
             clickedCard = card.target;
 
             openCards.push(clickedCard);
 
             if (openCards.length === 2) {
-                console.log('Kaks kaarti!');
+                // Checking if the pair exist in th external function:
                 pairCheck(openCards);
                 if (!pairCheck(openCards)) {
-                    console.log('vastus kontrollist', pairCheck(openCards));
+                    // empties the array
                     openCards = [];
                 } else {
+                    // case when there is a match
                     foundPairs ++;
-                    console.log('Leitud paare', foundPairs);
                     openCards = [];
                 }
-                moveCount ++;
+                moveCount ++;  // increases the move counter
                 displayMoveCount(moveCount);
-                console.log('move cpount:', moveCount);
+                // for ending the game, the maximum on pairs is 8
                 if (foundPairs === 8) {
-                    stopTimer();
-                    alert('Game over!');
+                    stopTimer(); // stops the timer
+                    modalWinner(); // displays the modal window
                 }
             }
         });
     }
 }
 
-
+// For 'flipping' the card:
 function openCard(card) {
     card.target.classList.toggle("show");
     card.target.classList.toggle("open");
 }
 
+// Match cheking:
 function pairCheck(array) {
     let result = false;
     if (array[0].lastElementChild.className ===
@@ -119,11 +137,13 @@ function pairCheck(array) {
         array[1].className = 'card incorrect';
         setTimeout(function() {
         array[0].className = 'card';
-        array[1].className = 'card';}, 1000)
+        array[1].className = 'card';}, 1000) // waits 1 second when no match
     }
-    return result;
+    return result; // returns true/false
 }
 
+
+// code for changing the stars. A bit cumbersome code, but works
 function displayMoveCount(moves) {
     let counter = document.querySelector('.moves');
     let timerDisplay = document.querySelector('.game-timer');
@@ -136,24 +156,59 @@ function displayMoveCount(moves) {
             stars[0].className = 'fa fa-star';
             stars[1].className = 'fa fa-star';
             stars[2].className = 'fa fa-star';
+            gameStars = '3';
             break;
         case 10:
             stars[0].className = 'fa fa-star';
             stars[1].className = 'fa fa-star';
             stars[2].className = 'fa fa-star-o';
+            gameStars = '2';
             break;
         case 20:
             stars[0].className = 'fa fa-star';
             stars[1].className = 'fa fa-star-o';
             stars[2].className = 'fa fa-star-o';
+            gameStars = '1';
             break;
         case 40:
             stars[0].className = 'fa fa-star-o';
             stars[1].className = 'fa fa-star-o';
             stars[2].className = 'fa fa-star-o';
-            break;
+            gameStars = '0';
     }
 }
+
+    //Modal window stuff (start) - https://www.w3schools.com/howto/howto_css_modals.asp
+
+function modalWinner() {
+    let modal = document.getElementById('myModal');
+    let span = document.getElementsByClassName("close")[0];
+    let secondsSpent = document.querySelector('.sec');
+    let minutesSpent = document.querySelector('.min');
+    let earnedStars = document.querySelector('.earned-stars');
+    let playAgainButton = document.querySelector('#play-again');
+    secondsSpent.innerText = seconds;
+    minutesSpent.innerText = minutes;
+    earnedStars.innerText = gameStars;
+    playAgainButton.addEventListener('click', function () {
+        newGame();
+        modal.style.display = "none";
+    });
+
+
+    modal.style.display = "block";
+    span.onclick = function() {
+        modal.style.display = "none";
+    };
+    modal.onclick = function(event) {
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    }
+}
+    //Modal window stuff (end)
+
+
 
 
     /*
@@ -193,4 +248,3 @@ function displayMoveCount(moves) {
 
 newGame();
 theGame();
-startTimer();
