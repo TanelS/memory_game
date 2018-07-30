@@ -1,3 +1,4 @@
+
 /*
  * Create a list that holds all of your cards
  */
@@ -8,9 +9,11 @@
 // of the global variables. Timer functionality should be redisgned
 
 let timer;
-let minutes = '0';
-let seconds = '0';
-let gameStars = '0';
+let minutes = 0;
+let seconds = 0;
+let gameStars = 0;
+let runTimer = false;
+let timerDisplay = document.querySelector('.game-timer');
 
 function startTimer() {
     timer = setInterval(function () {
@@ -19,7 +22,8 @@ function startTimer() {
             minutes++;
             seconds = 0;
         }
-    }, 1000)
+        timerDisplay.innerText = formatTime();
+        }, 1000)
 }
 
 
@@ -28,10 +32,11 @@ function stopTimer() {
 }
 
 function formatTime() {
-    let sec = seconds < 9 ? '0' + String(seconds) : String(seconds);
-    let min = minutes < 9 ? '0' + String(minutes) : String(minutes);
+    let sec = seconds <= 9 ? '0' + String(seconds) : String(seconds);
+    let min = minutes <= 9 ? '0' + String(minutes) : String(minutes);
     return min + ':' + sec;
 }
+
 
 // Timer (end) ==========================================================
 
@@ -44,12 +49,9 @@ function newGame() {
     let cardPack = document.querySelector(".deck");
     let stars = document.querySelectorAll(".fa-star-o");
     let counter = document.querySelector('.moves');
-    let timerDisplay = document.querySelector('.game-timer');
     // new 'empty' values for the game
     timerDisplay.innerText = '00:00';
     counter.innerText = 0;
-    minutes = '0';
-    seconds = '0';
     for (let card of cards) {
         card.className = 'card';
         packOfCards.push(card);
@@ -67,7 +69,7 @@ function newGame() {
     for (let star of stars) {
         star.className = 'fa fa-star';
     }
-
+    startTimer(); //TODO: kind of works but ... fix!
 }
 
 // Main function for running the game:
@@ -81,16 +83,16 @@ function theGame() {
     let restartButton = document.querySelector('.fa-repeat');
 
     // Eventlistener for clicks on the cards
+
     restartButton.addEventListener('click', function () {
-        openCards = [];
-        moveCount = 0;
-        foundPairs = 0;
+        stopTimer();
         newGame();
     });
     for (card of cards) {
         card.addEventListener("click", function (card) {
             openCard(card);
-            startTimer();
+            // startTimer(); // when starts from here the time starts to 'travel'
+            runTimer = true;
             clickedCard = card.target;
 
             openCards.push(clickedCard);
@@ -108,6 +110,7 @@ function theGame() {
                 }
                 moveCount ++;  // increases the move counter
                 displayMoveCount(moveCount);
+                console.log(foundPairs);
                 // for ending the game, the maximum on pairs is 8
                 if (foundPairs === 8) {
                     stopTimer(); // stops the timer
@@ -136,8 +139,8 @@ function pairCheck(array) {
         array[0].className = 'card incorrect';
         array[1].className = 'card incorrect';
         setTimeout(function() {
-        array[0].className = 'card';
-        array[1].className = 'card';}, 1000) // waits 1 second when no match
+            array[0].className = 'card';
+            array[1].className = 'card';}, 1000) // waits 1 second when no match
     }
     return result; // returns true/false
 }
@@ -146,9 +149,10 @@ function pairCheck(array) {
 // code for changing the stars. A bit cumbersome code, but works
 function displayMoveCount(moves) {
     let counter = document.querySelector('.moves');
-    let timerDisplay = document.querySelector('.game-timer');
+    // let timerDisplay = document.querySelector('.game-timer');
     timerDisplay.innerText = formatTime();
-    let stars = document.querySelectorAll('.fa-star');
+    let starPanel = document.querySelector('.stars');
+    let stars = starPanel.getElementsByTagName('i');
     counter.innerText = moves;
 
     switch (moves) {
@@ -156,29 +160,29 @@ function displayMoveCount(moves) {
             stars[0].className = 'fa fa-star';
             stars[1].className = 'fa fa-star';
             stars[2].className = 'fa fa-star';
-            gameStars = '3';
+            gameStars = 3;
             break;
         case 10:
             stars[0].className = 'fa fa-star';
             stars[1].className = 'fa fa-star';
             stars[2].className = 'fa fa-star-o';
-            gameStars = '2';
+            gameStars = 2;
             break;
         case 20:
             stars[0].className = 'fa fa-star';
             stars[1].className = 'fa fa-star-o';
             stars[2].className = 'fa fa-star-o';
-            gameStars = '1';
+            gameStars = 1;
             break;
         case 40:
             stars[0].className = 'fa fa-star-o';
             stars[1].className = 'fa fa-star-o';
             stars[2].className = 'fa fa-star-o';
-            gameStars = '0';
+            gameStars = 0;
     }
 }
 
-    //Modal window stuff (start) - https://www.w3schools.com/howto/howto_css_modals.asp
+//Modal window stuff (start) - https://www.w3schools.com/howto/howto_css_modals.asp
 
 function modalWinner() {
     let modal = document.getElementById('myModal');
@@ -206,33 +210,33 @@ function modalWinner() {
         }
     }
 }
-    //Modal window stuff (end)
+//Modal window stuff (end)
 
 
 
 
-    /*
-     * Display the cards on the page
-     *   - shuffle the list of cards using the provided "shuffle" method below
-     *   - loop through each card and create its HTML
-     *   - add each card's HTML to the page
-     */
+/*
+ * Display the cards on the page
+ *   - shuffle the list of cards using the provided "shuffle" method below
+ *   - loop through each card and create its HTML
+ *   - add each card's HTML to the page
+ */
 
 // Shuffle function from http://stackoverflow.com/a/2450976
-    function shuffle(array) {
-        let currentIndex = array.length,
-            temporaryValue,
-            randomIndex;
+function shuffle(array) {
+    let currentIndex = array.length,
+        temporaryValue,
+        randomIndex;
 
-        while (currentIndex !== 0) {
-            randomIndex = Math.floor(Math.random() * currentIndex);
-            currentIndex -= 1;
-            temporaryValue = array[currentIndex];
-            array[currentIndex] = array[randomIndex];
-            array[randomIndex] = temporaryValue;
-        }
-        return array;
+    while (currentIndex !== 0) {
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex -= 1;
+        temporaryValue = array[currentIndex];
+        array[currentIndex] = array[randomIndex];
+        array[randomIndex] = temporaryValue;
     }
+    return array;
+}
 
 /*
  * set up the event listener for a card. If a card is clicked:
